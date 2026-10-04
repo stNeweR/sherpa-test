@@ -1,0 +1,26 @@
+Error:
+  type: object
+  description: Ошибка бизнес-логики, заданная use case
+  required: [error]
+  properties:
+    error:
+      type: string
+
+ErrorMessage:
+  type: object
+  description: Ошибка инфраструктурного слоя (middleware, роутинг)
+  required: [message]
+  properties:
+    message:
+      type: string
+
+RateLimitError:
+  type: object
+  description: Превышен лимит запросов
+  required: [error, retry_after]
+  properties:
+    error:
+      type: string
+    retry_after:
+      type: integer
+      description: Через сколько секунд можно повторить запрос

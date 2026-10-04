@@ -1,0 +1,104 @@
+ImportJobStatus:
+  type: object
+  description: Снимок состояния задачи импорта
+  required:
+    - job_id
+    - state
+    - processed
+    - imported
+    - updated
+    - failed
+    - created_at
+    - updated_at
+    - error
+    - report
+  properties:
+    job_id:
+      type: string
+      format: uuid
+      example: 8eff1b47-459a-44a2-b2d1-a397709ab8ee
+    state:
+      type: string
+      enum: [pending, processing, completed, failed]
+    processed:
+      type: integer
+      description: Обработано строк
+      example: 40
+    imported:
+      type: integer
+      example: 38
+    updated:
+      type: integer
+      example: 0
+    failed:
+      type: integer
+      example: 2
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+    error:
+      type: string
+      nullable: true
+      description: Причина падения задачи целиком; `null` при успешном ходе
+    report:
+      allOf:
+        - $ref: '#/ImportReport'
+      nullable: true
+      description: Итог запуска; доступен в состоянии `completed`
+
+ImportReport:
+  type: object
+  description: Итог одного запуска импорта
+  required: [total, imported, updated, failed, duration_seconds, errors]
+  properties:
+    total:
+      type: integer
+      example: 40
+    imported:
+      type: integer
+      description: Создано новых товаров
+      example: 38
+    updated:
+      type: integer
+      description: Обновлено существующих товаров
+      example: 0
+    failed:
+      type: integer
+      description: Строк с ошибками
+      example: 2
+    duration_seconds:
+      type: number
+      format: float
+      example: 308.412
+    errors:
+      type: array
+      items:
+        $ref: '#/ImportError'
+
+ImportError:
+  type: object
+  description: |
+    Ошибка одной строки импорта. Ошибка не прерывает процесс — строки
+    собираются в отчёт и возвращаются в задаче.
+  required: [row_number, code, message, context]
+  properties:
+    row_number:
+      type: integer
+      description: Номер строки в XLSX
+      example: 12
+    code:
+      type: string
+      example: image_download_failed
+    message:
+      type: string
+      example: Не удалось скачать изображение
+    context:
+      type: object
+      description: Детали ошибки
+      additionalProperties:
+        type: string
+      example:
+        url: http://catalog.collant.ru/pics/SNL-558148_b15.jpg

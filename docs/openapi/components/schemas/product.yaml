@@ -1,0 +1,136 @@
+Pagination:
+  type: object
+  required: [page, limit, total, pages]
+  properties:
+    page:
+      type: integer
+      example: 1
+    limit:
+      type: integer
+      example: 20
+    total:
+      type: integer
+      description: Всего товаров по текущим фильтрам
+      example: 8
+    pages:
+      type: integer
+      description: Количество страниц
+      example: 1
+
+ProductSummary:
+  type: object
+  description: Товар в списке
+  required: [id, external_code, name, price, discount, created_at, thumbnail_url]
+  properties:
+    id:
+      type: integer
+      example: 1
+    external_code:
+      type: string
+      example: '12345'
+    name:
+      type: string
+      example: Болт М12×60
+    price:
+      type: string
+      description: Цена продажи
+      example: '42.50'
+    discount:
+      type: string
+      description: Скидка в процентах
+      example: '10'
+    created_at:
+      type: string
+      format: date-time
+    thumbnail_url:
+      type: string
+      format: uri
+      nullable: true
+      description: URL первого изображения товара, если файл скачан
+
+ProductPage:
+  type: object
+  required: [items, pagination]
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/ProductSummary'
+    pagination:
+      $ref: '#/Pagination'
+
+ProductAttribute:
+  type: object
+  description: Произвольный атрибут из колонок XLSX
+  required: [key, value]
+  properties:
+    key:
+      type: string
+      example: Цвет
+    value:
+      type: string
+      example: оцинкованный
+
+ProductImage:
+  type: object
+  required: [url, path]
+  properties:
+    url:
+      type: string
+      format: uri
+      description: Исходный URL изображения из XLSX
+    path:
+      type: string
+      nullable: true
+      description: Путь к скачанному файлу; `null`, если скачивание не удалось
+
+ProductCard:
+  type: object
+  required:
+    - id
+    - external_code
+    - name
+    - description
+    - price
+    - purchase_price
+    - discount
+    - created_at
+    - updated_at
+    - attributes
+    - images
+  properties:
+    id:
+      type: integer
+      example: 1
+    external_code:
+      type: string
+      example: '12345'
+    name:
+      type: string
+      example: Болт М12×60
+    description:
+      type: string
+      example: Оцинкованный болт с шестигранной головкой
+    price:
+      type: string
+      example: '42.50'
+    purchase_price:
+      type: string
+      example: '35.00'
+    discount:
+      type: string
+      example: '10'
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+    attributes:
+      type: array
+      items:
+        $ref: '#/ProductAttribute'
+    images:
+      type: array
+      items:
+        $ref: '#/ProductImage'

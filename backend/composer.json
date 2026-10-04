@@ -1,0 +1,76 @@
+{
+    "name": "sherpa/products-import",
+    "description": "Import/Export products — Slim + Doctrine ORM + Messenger (RabbitMQ)",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "ext-amqp": "*",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-openssl": "*",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "ext-zip": "*",
+        "doctrine/dbal": "^4.2",
+        "doctrine/migrations": "^3.9",
+        "doctrine/orm": "^3.7",
+        "firebase/php-jwt": "^7.2",
+        "guzzlehttp/guzzle": "^7.9 || ^8.0",
+        "monolog/monolog": "^3.6",
+        "openspout/openspout": "^5.12",
+        "php-di/php-di": "^7.0",
+        "slim/psr7": "^1.8",
+        "slim/slim": "^4.15",
+        "symfony/amqp-messenger": "^8.1",
+        "symfony/cache": "^7.4 || ^8.1",
+        "symfony/console": "^7.4 || ^8.1",
+        "symfony/dotenv": "^7.4 || ^8.1",
+        "symfony/event-dispatcher": "^8.1",
+        "symfony/messenger": "^8.1",
+        "symfony/property-access": "^8.1",
+        "symfony/property-info": "^8.1",
+        "symfony/rate-limiter": "^7.4 || ^8.1",
+        "symfony/serializer": "^8.1"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^13.3",
+        "symfony/yaml": "^7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/App/",
+            "Core\\": "src/Core/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {}
+    },
+    "scripts": {
+        "test": [
+            "@php vendor/bin/phpunit --testsuite unit"
+        ],
+        "lint": [
+            "@php vendor/bin/php-cs-fixer check --diff",
+            "@php vendor/bin/phpstan analyse --no-progress --memory-limit=512M"
+        ],
+        "cs-fix": "php-cs-fixer fix",
+        "test-integration": [
+            "@php vendor/bin/phpunit --testsuite integration"
+        ],
+        "test-all": [
+            "@php vendor/bin/phpunit"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

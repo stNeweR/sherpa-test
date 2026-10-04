@@ -1,0 +1,8 @@
+bearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: |
+    Токен из `POST /api/auth/login`. Передаётся в заголовке
+    `Authorization: Bearer <access_token>`. Требуется для всех маршрутов
+    `/api/products*` и `/api/imports*`.

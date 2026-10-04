@@ -1,0 +1,34 @@
+get:
+  tags: [Товары]
+  summary: Карточка товара с атрибутами и изображениями
+  description: |
+    Возвращает полные данные товара по его внешнему коду из XLSX,
+    включая произвольные атрибуты колонок и изображения с локальными путями.
+  operationId: getProduct
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: external_code
+      in: path
+      required: true
+      description: Внешний код товара
+      schema:
+        type: string
+      example: '12345'
+  responses:
+    '200':
+      description: Карточка товара
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/product.yaml#/ProductCard'
+    '401':
+      $ref: '../components/responses.yaml#/Unauthorized'
+    '404':
+      description: Товар не найден
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/errors.yaml#/Error'
+          example:
+            error: Товар не найден

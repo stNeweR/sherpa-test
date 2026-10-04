@@ -1,0 +1,75 @@
+get:
+  tags: [Импорт]
+  summary: Статус и отчёт по задаче импорта
+  description: |
+    Отдаёт снимок состояния задачи. Пока импорт идёт, `state` равен
+    `pending` или `processing`, а счётчики отражают прогресс по строкам.
+    В `completed` счётчики заполнены, а `report` содержит итог запуска
+    и список ошибок по строкам; ошибки строк не прерывают импорт.
+  operationId: getImportStatus
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: job_id
+      in: path
+      required: true
+      description: Идентификатор задачи из ответа `POST /api/imports`
+      schema:
+        type: string
+        format: uuid
+      example: 8eff1b47-459a-44a2-b2d1-a397709ab8ee
+  responses:
+    '200':
+      description: Статус задачи
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/import.yaml#/ImportJobStatus'
+          examples:
+            processing:
+              summary: Импорт в процессе
+              value:
+                job_id: 8eff1b47-459a-44a2-b2d1-a397709ab8ee
+                state: processing
+                processed: 20
+                imported: 18
+                updated: 2
+                failed: 1
+                created_at: '2026-10-03T17:19:04+00:00'
+                updated_at: '2026-10-03T17:19:31+00:00'
+                error: null
+                report: null
+            completed:
+              summary: Импорт завершён с ошибками строк
+              value:
+                job_id: 8eff1b47-459a-44a2-b2d1-a397709ab8ee
+                state: completed
+                processed: 40
+                imported: 38
+                updated: 0
+                failed: 2
+                created_at: '2026-10-03T17:19:04+00:00'
+                updated_at: '2026-10-03T17:24:12+00:00'
+                error: null
+                report:
+                  total: 40
+                  imported: 38
+                  updated: 0
+                  failed: 2
+                  duration_seconds: 308.412
+                  errors:
+                    - row_number: 12
+                      code: image_download_failed
+                      message: Не удалось скачать изображение
+                      context:
+                        url: http://catalog.collant.ru/pics/SNL-558148_b15.jpg
+    '401':
+      $ref: '../components/responses.yaml#/Unauthorized'
+    '404':
+      description: Задача не найдена
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/errors.yaml#/Error'
+          example:
+            error: Задача не найдена

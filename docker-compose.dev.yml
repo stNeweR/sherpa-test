@@ -1,0 +1,21 @@
+name: sherpa-test
+
+services:
+  app:
+    volumes:
+      - ./backend:/var/www/html
+      - vendor_backend:/var/www/html/vendor
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "1"
+
+  worker:
+    volumes:
+      - ./backend:/var/www/html
+      - vendor_backend:/var/www/html/vendor
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "1"
+
+volumes:
+  vendor_backend:

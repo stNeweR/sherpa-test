@@ -1,0 +1,35 @@
+get:
+  tags: [Система]
+  summary: Проверить доступность БД и брокера сообщений
+  description: |
+    Публичная ручка для балансировщика и дежурного наблюдения.
+    Код ответа `503`, если хотя бы одна зависимость недоступна.
+  operationId: health
+  security: []
+  responses:
+    '200':
+      description: Все зависимости доступны
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/health.yaml#/HealthStatus'
+          example:
+            status: ok
+            database:
+              status: ok
+            broker:
+              status: ok
+            time: '2026-10-03T17:17:31+00:00'
+    '503':
+      description: Одна из зависимостей недоступна
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/health.yaml#/HealthStatus'
+          example:
+            status: degraded
+            database:
+              status: ok
+            broker:
+              status: error
+            time: '2026-10-03T17:17:31+00:00'

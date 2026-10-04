@@ -1,0 +1,11 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    tmpDir: var/phpstan
+    ignoreErrors:
+        # Doctrine присваивает идентификаторы сущностей через рефлексию
+        -
+            identifier: property.onlyRead
+            path: src/App/Entity/*

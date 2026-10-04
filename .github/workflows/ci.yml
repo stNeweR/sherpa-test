@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (PHP)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app_secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      APP_ENV: test
+      APP_DEBUG: '0'
+      DATABASE_URL: postgresql://app:app_secret@127.0.0.1:5432/app?serverVersion=17&charset=utf8
+      IMPORT_STORAGE_PATH: ${{ github.workspace }}/backend/var/imports
+      MEDIA_PATH: ${{ github.workspace }}/backend/var/media
+      JWT_SECRET: ci-secret-key-at-least-32-characters-long
+      JWT_ALGORITHM: HS256
+      JWT_TTL: '3600'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Установить PHP с расширениями
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: amqp, intl, json, mbstring, pdo, pdo_pgsql, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Установить зависимости
+        working-directory: backend
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: PHP CS Fixer
+        working-directory: backend
+        run: vendor/bin/php-cs-fixer check --diff --using-cache=no
+
+      - name: PHPStan
+        working-directory: backend
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
+
+      - name: Применить миграции
+        working-directory: backend
+        run: php bin/console migrations:migrate --no-interaction
+
+      - name: Unit-тесты
+        working-directory: backend
+        run: vendor/bin/phpunit --testsuite unit --testdox
+
+      - name: Интеграционные тесты
+        working-directory: backend
+        run: vendor/bin/phpunit --testsuite integration --testdox
+
+  frontend:
+    name: Frontend (Angular)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Установить зависимости
+        run: npm ci
+
+      - name: Сборка
+        run: npm run build
+
+  docker:
+    name: Сборка образа backend
+    runs-on: ubuntu-latest
+    needs: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Собрать образ
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          push: false
+          load: true
+          tags: sherpa-test-backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  e2e:
+    name: E2E (docker compose + smoke.sh)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # smoke.sh ходит по http://localhost:8080 — это nginx из сервиса frontend,
+      # который проксирует /api на app и отдаёт /media из тома media.
+      - name: Поднять стек
+        run: |
+          cp .env.example .env
+          docker compose up -d --build db rabbitmq app worker frontend
+
+      - name: Миграции, сидеры и очереди
+        run: |
+          docker compose exec -T app php bin/console migrations:migrate --no-interaction
+          docker compose exec -T app php bin/console app:seed --no-interaction
+          docker compose exec -T app php bin/console messenger:setup-transports async
+          docker compose exec -T app php bin/console messenger:setup-transports failed
+
+      - name: Дождаться готовности API
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/api/health > /dev/null; then
+              echo "API готов"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API не поднялся"
+          docker compose logs --tail=100
+          exit 1
+
+      - name: E2E-проверки
+        run: sh scripts/smoke.sh
+
+      - name: Логи стенда при падении
+        if: failure()
+        run: docker compose logs --tail=200
+
+      - name: Остановить стек
+        if: always()
+        run: docker compose down -v

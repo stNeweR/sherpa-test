@@ -1,0 +1,378 @@
+@use '@angular/material' as mat;
+
+// ---------------------------------------------------------------------------
+// Тема
+// ---------------------------------------------------------------------------
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: (
+        plain-family: (
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          sans-serif,
+        ),
+        brand-family: (
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          sans-serif,
+        ),
+      ),
+      density: 0,
+    )
+  );
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+// ---------------------------------------------------------------------------
+// Приложные токены поверх Material-системы
+// ---------------------------------------------------------------------------
+
+:root {
+  --app-radius: 0.5rem;
+  --app-success: #2e7d32;
+  --app-muted: color-mix(in oklab, var(--mat-sys-on-surface) 65%, var(--mat-sys-surface));
+  --app-faint: color-mix(in oklab, var(--mat-sys-on-surface) 38%, var(--mat-sys-surface));
+  --app-tint: color-mix(in oklab, var(--mat-sys-on-surface) 6%, var(--mat-sys-surface));
+}
+
+// ---------------------------------------------------------------------------
+// Типографика и утилиты
+// ---------------------------------------------------------------------------
+
+.muted {
+  color: var(--app-muted);
+}
+
+.faint {
+  color: var(--app-faint);
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar-title {
+  margin-left: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ---------------------------------------------------------------------------
+// Раскладка
+// ---------------------------------------------------------------------------
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.row--wrap {
+  flex-wrap: wrap;
+}
+
+.row--between {
+  justify-content: space-between;
+}
+
+.row--top {
+  align-items: flex-start;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.grow {
+  flex: 1 1 auto;
+}
+
+.pad {
+  padding: 1rem 1.5rem;
+}
+
+.gap-lg {
+  gap: 1.5rem;
+}
+
+.mt-md {
+  margin-top: 1rem;
+}
+
+// ---------------------------------------------------------------------------
+// Сетки
+// ---------------------------------------------------------------------------
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.75rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.stats > div {
+  background: var(--app-tint);
+  border-radius: var(--app-radius);
+  padding: 0.75rem 1rem;
+}
+
+.stats dt {
+  color: var(--app-muted);
+  font-size: 0.8rem;
+}
+
+.stats dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  padding: 1.5rem;
+}
+
+@media (min-width: 60rem) {
+  .detail-layout {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Блоки
+// ---------------------------------------------------------------------------
+
+.auth-card {
+  margin: 4rem auto;
+  max-width: 24rem;
+}
+
+.card-link {
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.page-card {
+  margin: 1.5rem;
+  max-width: 62rem;
+}
+
+.field {
+  display: block;
+  width: 100%;
+}
+
+.field--grow {
+  flex: 1 1 18rem;
+  min-width: 14rem;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-stack {
+  margin-top: 0.5rem;
+}
+
+.tint-box {
+  background: var(--app-tint);
+  border-radius: var(--app-radius);
+  padding: 0.75rem 1rem;
+}
+
+.table-wrap {
+  display: block;
+  max-height: 22rem;
+  overflow: auto;
+  width: 100%;
+}
+
+.code-chip {
+  background: var(--app-tint);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.35rem;
+}
+
+// ---------------------------------------------------------------------------
+// Изображения
+// ---------------------------------------------------------------------------
+
+.media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  background: var(--app-tint);
+  overflow: hidden;
+}
+
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  background: var(--app-tint);
+  border-radius: var(--app-radius);
+  overflow: hidden;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--app-faint);
+}
+
+// ---------------------------------------------------------------------------
+// Цены
+// ---------------------------------------------------------------------------
+
+.prices {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.price {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.price--lg {
+  font-size: 1.75rem;
+}
+
+.discount {
+  color: var(--app-success);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+// ---------------------------------------------------------------------------
+// Состояния и сообщения
+// ---------------------------------------------------------------------------
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+}
+
+.banner--error {
+  color: var(--mat-sys-error);
+}
+
+.banner--block {
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  color: var(--app-muted);
+}
+
+// ---------------------------------------------------------------------------
+// Страница карточки товара
+// ---------------------------------------------------------------------------
+
+.detail-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.detail-code {
+  margin: 0 0 1rem;
+  color: var(--app-muted);
+}
+
+.detail-subtitle {
+  margin: 1rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.detail-meta {
+  font-size: 0.85rem;
+  color: var(--app-muted);
+}
+
+// ---------------------------------------------------------------------------
+// Страница импорта
+// ---------------------------------------------------------------------------
+
+.dropzone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  border: 1px dashed var(--app-faint);
+  border-radius: var(--app-radius);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.dropzone:hover {
+  border-color: var(--mat-sys-primary);
+}
+
+.dropzone input {
+  display: none;
+}

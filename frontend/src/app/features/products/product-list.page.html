@@ -1,0 +1,103 @@
+<mat-toolbar color="primary">
+  <span class="toolbar-title">Шерпа · товары</span>
+  <span class="grow"></span>
+  <a mat-button routerLink="/import">
+    <app-icon name="upload" />
+    Импорт
+  </a>
+</mat-toolbar>
+
+<section class="row row--wrap gap-lg pad">
+  <mat-form-field appearance="outline" class="field field--grow">
+    <mat-label>Поиск по наименованию</mat-label>
+    <input
+      matInput
+      type="search"
+      [value]="query().search"
+      (input)="onSearch($any($event.target).value)"
+      placeholder="Например: бермуды"
+    />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="field">
+    <mat-label>Цена от</mat-label>
+    <input
+      matInput
+      type="number"
+      min="0"
+      [value]="query().priceFrom ?? ''"
+      (input)="onPriceFrom($any($event.target).value)"
+    />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="field">
+    <mat-label>Цена до</mat-label>
+    <input
+      matInput
+      type="number"
+      min="0"
+      [value]="query().priceTo ?? ''"
+      (input)="onPriceTo($any($event.target).value)"
+    />
+  </mat-form-field>
+
+  <button mat-stroked-button type="button" (click)="onResetFilters()">Сбросить</button>
+</section>
+
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (error()) {
+  <div class="banner banner--error">
+    <app-icon name="alert" />
+    <span>{{ error() }}</span>
+    <button mat-button type="button" (click)="retry()">Повторить</button>
+  </div>
+}
+
+@if (empty()) {
+  <div class="banner banner--block">
+    <app-icon name="box" />
+    <p>Товары не найдены</p>
+    <a mat-flat-button color="primary" routerLink="/import">Загрузить файл</a>
+  </div>
+}
+
+<div class="card-grid">
+  @for (product of items(); track product.id) {
+    <mat-card class="card-link" [routerLink]="['/products', product.external_code]">
+      <div class="media">
+        @if (imageUrl(product.thumbnail_url); as thumbnail) {
+          <img [src]="thumbnail" [alt]="product.name" loading="lazy" />
+        } @else {
+          <div class="placeholder">
+            <app-icon name="image-off" />
+          </div>
+        }
+      </div>
+
+      <mat-card-header>
+        <mat-card-title class="truncate">{{ product.name }}</mat-card-title>
+        <mat-card-subtitle>{{ product.external_code }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="prices">
+          <span class="price">{{ product.price }} ₽</span>
+          @if (product.discount !== '0.00') {
+            <span class="discount">−{{ product.discount }}%</span>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
+
+<mat-paginator
+  [length]="total()"
+  [pageIndex]="query().page - 1"
+  [pageSize]="query().limit"
+  [pageSizeOptions]="[12, 24, 48, 100]"
+  (page)="onPage($event)"
+/>

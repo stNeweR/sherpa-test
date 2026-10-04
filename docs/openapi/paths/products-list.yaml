@@ -1,0 +1,53 @@
+get:
+  tags: [Товары]
+  summary: Список товаров с пагинацией, поиском и фильтрами
+  description: |
+    Возвращает товары, созданные или обновлённые последним импортом.
+    Фильтры применяются к наименованию (`name`) и цене, сортировка —
+    по дате создания (новые первыми).
+  operationId: listProducts
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: page
+      in: query
+      description: Номер страницы, начиная с 1
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    - name: limit
+      in: query
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    - name: name
+      in: query
+      description: Поиск по наименованию, регистр не важен
+      schema:
+        type: string
+      example: болт
+    - name: price_from
+      in: query
+      description: Нижняя граница цены, включительно
+      schema:
+        type: number
+      example: 100
+    - name: price_to
+      in: query
+      description: Верхняя граница цены, включительно
+      schema:
+        type: number
+      example: 5000
+  responses:
+    '200':
+      description: Страница товаров
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/product.yaml#/ProductPage'
+    '401':
+      $ref: '../components/responses.yaml#/Unauthorized'

@@ -1,0 +1,32 @@
+# ---- secrets / env ----
+.env
+.env.local
+.env.*.local
+
+# ---- PHP / Composer ----
+backend/vendor/
+backend/.phpunit.cache/
+backend/.php-cs-fixer.cache
+backend/storage/logs/*
+!backend/storage/logs/.gitkeep
+backend/storage/imports/*
+!backend/storage/imports/.gitkeep
+backend/var/
+backend/coverage/
+
+# ---- Node / Angular ----
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+frontend/.vite/
+
+# ---- downloaded media (docker volume, not in repo) ----
+media/
+
+# ---- OS / IDE ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

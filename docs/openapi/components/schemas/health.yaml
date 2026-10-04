@@ -1,0 +1,23 @@
+DependencyStatus:
+  type: object
+  required: [status]
+  properties:
+    status:
+      type: string
+      enum: [ok, error]
+
+HealthStatus:
+  type: object
+  required: [status, database, broker, time]
+  properties:
+    status:
+      type: string
+      description: Сводное состояние приложения
+      enum: [ok, degraded]
+    database:
+      $ref: '#/DependencyStatus'
+    broker:
+      $ref: '#/DependencyStatus'
+    time:
+      type: string
+      format: date-time

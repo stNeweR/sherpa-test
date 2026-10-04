@@ -1,0 +1,78 @@
+<mat-toolbar color="primary">
+  <a mat-button routerLink="/products">
+    <app-icon name="arrow-left" />
+    К списку
+  </a>
+  <span class="toolbar-title">{{ title() }}</span>
+</mat-toolbar>
+
+@if (state(); as current) {
+  @if (current.status === 'loading') {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (current.status === 'error') {
+    <div class="banner banner--block">
+      <app-icon name="alert" />
+      <p>{{ current.error }}</p>
+      <a mat-flat-button color="primary" routerLink="/products">К списку товаров</a>
+    </div>
+  }
+
+  @if (current.status === 'ready') {
+    <div class="detail-layout">
+      <section class="thumb-grid">
+        @if (current.product.images.length > 0) {
+          @for (image of current.product.images; track image.url) {
+            <div class="thumb">
+              <img [src]="imageSrc(image)" [alt]="current.product.name" loading="lazy" />
+            </div>
+          }
+        } @else {
+          <div class="thumb placeholder">
+            <app-icon name="image-off" />
+            <span>Изображений нет</span>
+          </div>
+        }
+      </section>
+
+      <section>
+        <h1 class="detail-title">{{ current.product.name }}</h1>
+        <p class="detail-code">Артикул: {{ current.product.external_code }}</p>
+
+        <div class="prices">
+          <span class="price price--lg">{{ current.product.price }} ₽</span>
+          @if (current.product.discount !== '0.00') {
+            <span class="discount">Скидка {{ current.product.discount }}%</span>
+          }
+        </div>
+
+        @if (current.product.purchase_price !== '0.00') {
+          <p class="muted">Закупочная цена: {{ current.product.purchase_price }} ₽</p>
+        }
+
+        @if (current.product.description !== '') {
+          <p class="muted">{{ current.product.description }}</p>
+        }
+
+        @if (current.product.attributes.length > 0) {
+          <mat-divider />
+          <h2 class="detail-subtitle">Характеристики</h2>
+          <mat-chip-set>
+            @for (attribute of current.product.attributes; track attribute.key) {
+              <mat-chip disabled>
+                <strong>{{ attribute.key }}:</strong>&nbsp;{{ attribute.value }}
+              </mat-chip>
+            }
+          </mat-chip-set>
+        }
+
+        <mat-divider />
+        <p class="detail-meta">
+          Создан: {{ current.product.created_at | date: 'dd.MM.yyyy HH:mm' }}<br />
+          Обновлён: {{ current.product.updated_at | date: 'dd.MM.yyyy HH:mm' }}
+        </p>
+      </section>
+    </div>
+  }
+}

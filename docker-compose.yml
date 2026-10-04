@@ -1,0 +1,145 @@
+name: sherpa-test
+
+x-backend-env: &backend-env
+  APP_ENV: ${APP_ENV:-local}
+  APP_DEBUG: ${APP_DEBUG:-1}
+  APP_URL: ${APP_URL:-http://localhost:8080}
+  DB_SERVER_VERSION: ${DB_SERVER_VERSION:-17}
+  DATABASE_URL: pgsql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app_secret}@db:5432/${POSTGRES_DB:-app}
+  MESSENGER_TRANSPORT_DSN: amqp://${RABBITMQ_USER:-app}:${RABBITMQ_PASSWORD:-app_secret}@rabbitmq:5672/%2f/imports
+  MESSENGER_FAILED_TRANSPORT_DSN: amqp://${RABBITMQ_USER:-app}:${RABBITMQ_PASSWORD:-app_secret}@rabbitmq:5672/%2f/failed
+  MESSENGER_RETRY_MAX_ATTEMPTS: ${MESSENGER_RETRY_MAX_ATTEMPTS:-3}
+  MESSENGER_RETRY_DELAY_MS: ${MESSENGER_RETRY_DELAY_MS:-1000}
+  MESSENGER_FAILURE_LIMIT: ${MESSENGER_FAILURE_LIMIT:-200}
+  JWT_SECRET: ${JWT_SECRET:-change_me_in_dot_env}
+  JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+  JWT_TTL: ${JWT_TTL:-43200}
+  MEDIA_PATH: /var/www/media
+  MEDIA_PUBLIC_URL: /media
+  IMPORT_MAX_FILE_SIZE: ${IMPORT_MAX_FILE_SIZE:-20971520}
+  IMPORT_STORAGE_PATH: /var/www/html/storage/imports
+  IMPORT_RATE_LIMIT: ${IMPORT_RATE_LIMIT:-5}
+  SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@example.com}
+  SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin_secret}
+
+x-backend: &backend
+  image: sherpa-test-backend:local
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile
+    args:
+      PACKAGIST_MIRROR: ${PACKAGIST_MIRROR:-}
+  working_dir: /var/www/html
+  environment: *backend-env
+  volumes:
+    - media:/var/www/media
+    - imports:/var/www/html/storage/imports
+  networks:
+    - app_net
+  depends_on:
+    db:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app_secret}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-app}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-app_secret}
+    ports:
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app_net
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+    restart: unless-stopped
+
+  app:
+    <<: *backend
+    expose:
+      - "9000"
+    healthcheck:
+      test: ["CMD", "php", "bin/console", "app:health"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  worker:
+    <<: *backend
+    command: ["php", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=256M", "--no-interaction"]
+    volumes:
+      # media обязателен: воркер скачивает изображения в MEDIA_PATH, и без тома
+      # они остаются в слое контейнера и пропадают при каждом рестарте
+      - media:/var/www/media
+      - imports:/var/www/html/storage/imports
+    healthcheck:
+      disable: true
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    volumes:
+      - media:/var/www/media:ro
+    networks:
+      - app_net
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+  docs:
+    image: swaggerapi/swagger-ui:v5.33.1
+    environment:
+      SWAGGER_JSON_URL: /api-docs/openapi.yaml
+    volumes:
+      - ./docs:/usr/share/nginx/html/api-docs:ro
+    ports:
+      - "${DOCS_PORT:-8081}:8080"
+    networks:
+      - app_net
+    restart: unless-stopped
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  db_data:
+  rabbitmq_data:
+  media:
+  imports:

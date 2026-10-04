@@ -1,0 +1,117 @@
+<mat-toolbar color="primary">
+  <a mat-button routerLink="/products">
+    <app-icon name="arrow-left" />
+    К списку
+  </a>
+  <span class="toolbar-title">Импорт товаров</span>
+</mat-toolbar>
+
+<mat-card class="page-card">
+  <mat-card-header>
+    <mat-card-title>Загрузка файла</mat-card-title>
+    <mat-card-subtitle>Формат .xlsx, до 20 МБ</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <p class="muted">
+      Товары сопоставляются по внешнему коду: новые создаются, существующие обновляются. Обработка
+      выполняется в фоне, прогресс обновляется автоматически.
+    </p>
+
+    <label class="dropzone">
+      <input type="file" accept=".xlsx,.xlsm" (change)="onFileSelected($event)" />
+      <app-icon name="file" />
+      Выбрать файл
+    </label>
+
+    @if (uploading()) {
+      <div class="row muted mt-md">
+        <mat-spinner diameter="24" />
+        <span>Файл загружается…</span>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>
+
+@if (error()) {
+  <div class="banner banner--error">
+    <app-icon name="alert" />
+    <span>{{ error() }}</span>
+    <button mat-button type="button" (click)="reset()">Сбросить</button>
+  </div>
+}
+
+@if (job(); as current) {
+  <mat-card class="page-card">
+    <mat-card-header>
+      <mat-card-title>Задача {{ current.job_id }}</mat-card-title>
+      <mat-card-subtitle>{{ stateLabel() }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-progress-bar mode="determinate" [value]="progress()" />
+
+      <dl class="stats">
+        <div>
+          <dt>Обработано</dt>
+          <dd>{{ current.processed }}</dd>
+        </div>
+        <div>
+          <dt>Создано</dt>
+          <dd>{{ current.imported }}</dd>
+        </div>
+        <div>
+          <dt>Обновлено</dt>
+          <dd>{{ current.updated }}</dd>
+        </div>
+        <div>
+          <dt>Ошибок</dt>
+          <dd>{{ current.failed }}</dd>
+        </div>
+      </dl>
+
+      @if (current.report; as report) {
+        <p class="muted">
+          Всего строк: {{ report.total }} · длительность:
+          {{ report.duration_seconds | number: '1.0-2' }} с
+        </p>
+      }
+
+      @if (polling()) {
+        <p class="faint">Обновление…</p>
+      }
+
+      @if (errors().length > 0) {
+        <h3 class="detail-subtitle">Ошибки импорта</h3>
+        <table mat-table [dataSource]="errors()" class="table-wrap">
+          <ng-container matColumnDef="row">
+            <th mat-header-cell *matHeaderCellDef>Строка</th>
+            <td mat-cell *matCellDef="let error">{{ error.row_number }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef>Код</th>
+            <td mat-cell *matCellDef="let error">
+              <code class="code-chip">{{ error.code }}</code>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="message">
+            <th mat-header-cell *matHeaderCellDef>Сообщение</th>
+            <td mat-cell *matCellDef="let error">{{ error.message }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['row', 'code', 'message']"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: ['row', 'code', 'message']; trackBy: trackByRow"
+          ></tr>
+        </table>
+      }
+
+      @if (current.state === 'completed') {
+        <a mat-flat-button color="primary" routerLink="/products">Перейти к товарам</a>
+      }
+    </mat-card-content>
+  </mat-card>
+}

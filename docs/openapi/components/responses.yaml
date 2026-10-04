@@ -1,0 +1,38 @@
+Unauthorized:
+  description: Требуется авторизация
+  content:
+    application/json:
+      schema:
+        $ref: './schemas/errors.yaml#/ErrorMessage'
+      example:
+        message: 401 Unauthorized
+
+BadRequest:
+  description: Некорректный запрос
+  content:
+    application/json:
+      schema:
+        $ref: './schemas/errors.yaml#/Error'
+      example:
+        error: Укажите email и пароль
+
+ErrorMessage:
+  description: Ошибка инфраструктурного слоя (middleware, роутинг)
+  content:
+    application/json:
+      schema:
+        $ref: './schemas/errors.yaml#/ErrorMessage'
+      example:
+        message: 404 Not Found
+
+TooManyRequests:
+  description: Превышен лимит запросов
+  headers:
+    Retry-After:
+      description: Через сколько секунд можно повторить запрос
+      schema:
+        type: integer
+  content:
+    application/json:
+      schema:
+        $ref: './schemas/errors.yaml#/RateLimitError'

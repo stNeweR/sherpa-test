@@ -1,0 +1,38 @@
+post:
+  tags: [Auth]
+  summary: Войти и получить JWT
+  description: |
+    Проверяет email и пароль администратора и выдаёт подписанный JWT.
+    Токен хранится во вкладке `localStorage` и передаётся в последующих
+    запросах в заголовке `Authorization: Bearer <access_token>`.
+  operationId: login
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/auth.yaml#/LoginRequest'
+        examples:
+          default:
+            summary: Администратор из .env
+            value:
+              email: admin@example.com
+              password: admin_secret
+  responses:
+    '200':
+      description: Токен выдан
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/Token'
+    '400':
+      $ref: '../components/responses.yaml#/BadRequest'
+    '401':
+      description: Неверный email или пароль
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/errors.yaml#/Error'
+          example:
+            error: Неверный email или пароль

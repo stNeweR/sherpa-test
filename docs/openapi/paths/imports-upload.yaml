@@ -1,0 +1,75 @@
+post:
+  tags: [Импорт]
+  summary: Поставить XLSX-файл в очередь импорта
+  description: |
+    Загружает файл в общий том, создаёт задачу и передаёт её воркеру
+    через RabbitMQ. Ответ приходит сразу (`202`), файл по очереди не
+    передаётся — воркер читает его с тома по пути.
+
+    Обработка идёт в фоне: состояние задачи опрашивается через
+    `GET /api/imports/{job_id}`. Повторный импорт того же файла обновляет
+    существующие товары по внешнему коду, а не создаёт дубли.
+  operationId: uploadImport
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              type: string
+              format: binary
+              description: XLSX-файл с товарами
+          required: [file]
+        encoding:
+          file:
+            contentType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  responses:
+    '202':
+      description: Файл принят, импорт выполняется в фоне
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/import.yaml#/ImportJobStatus'
+    '400':
+      description: Файл не передан или не прошёл валидацию
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/errors.yaml#/Error'
+          examples:
+            noFile:
+              value:
+                error: Файл не передан, ожидается поле file
+            invalid:
+              value:
+                error: Ожидается XLSX-файл
+    '401':
+      $ref: '../components/responses.yaml#/Unauthorized'
+    '403':
+      $ref: '../components/responses.yaml#/ErrorMessage'
+    '429':
+      description: Превышен лимит запросов импорта
+      headers:
+        Retry-After:
+          description: Через сколько секунд можно повторить запрос
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/errors.yaml#/RateLimitError'
+          example:
+            error: Слишком много запросов импорта, попробуйте позже
+            retry_after: 42
+    '500':
+      description: Не удалось поставить файл в очередь
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/errors.yaml#/Error'
+          example:
+            error: Не удалось поставить файл в очередь

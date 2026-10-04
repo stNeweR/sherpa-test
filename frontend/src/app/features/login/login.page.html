@@ -1,0 +1,57 @@
+<mat-card class="auth-card">
+  <mat-card-header>
+    <mat-card-title>Вход</mat-card-title>
+    <mat-card-subtitle>Доступ к импорту товаров</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (error(); as message) {
+      <div class="banner banner--error">
+        <app-icon name="alert" />
+        <span>{{ message }}</span>
+      </div>
+    }
+
+    <mat-form-field appearance="outline" class="field">
+      <mat-label>Email</mat-label>
+      <input
+        matInput
+        type="email"
+        autocomplete="username"
+        [value]="email()"
+        (input)="onEmail($any($event.target).value)"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="field">
+      <mat-label>Пароль</mat-label>
+      <input
+        matInput
+        type="password"
+        autocomplete="current-password"
+        [value]="password()"
+        (keyup.enter)="submit()"
+        (input)="onPassword($any($event.target).value)"
+      />
+    </mat-form-field>
+
+    <button
+      mat-flat-button
+      color="primary"
+      class="btn-block"
+      type="button"
+      [disabled]="submitting() || email() === '' || password() === ''"
+      (click)="submit()"
+    >
+      @if (submitting()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        Войти
+      }
+    </button>
+
+    <button mat-button type="button" class="btn-block btn-stack" (click)="useDemoCredentials()">
+      Подставить демо-данные
+    </button>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,114 @@
+openapi: 3.0.3
+
+# Корневой файл спецификации. Описание разложено по доменам:
+#   openapi/paths/*.yaml           — по одному файлу на эндпоинт (Path Item);
+#   openapi/components/security-schemes.yaml — схемы безопасности;
+#   openapi/components/responses.yaml        — переиспользуемые ответы;
+#   openapi/components/schemas/*.yaml        — схемы данных по доменам.
+# Ссылка вида ./путь.yaml#/Фрагмент — внешний $ref (OpenAPI 3.0), поэтому
+# swagger-ui и редакторы подтягивают файлы относительно этого каталога.
+
+info:
+  title: Import/Export products API
+  version: 1.0.0
+  description: |
+    Импорт товаров из XLSX и доступ к каталогу импортированных товаров.
+
+    Спецификация ведётся вручную: правки вносятся в файлы рядом с этим, а не
+    генерируются из кода. Актуальность проверяет `OpenApiSpecTest`.
+
+    Соглашения:
+    * все тела запросов и ответов — JSON в `snake_case`;
+    * списки отдаются в виде `{ "items": [...], "pagination": {...} }`;
+    * цены и скидки приходят строкой, чтобы не терять точность десятичной дроби;
+    * ошибки, сформированные контроллером, содержат поле `error`, ошибки
+      инфраструктурного слоя (middleware, роутинг) — поле `message`.
+  contact:
+    name: Команда разработки
+    email: dev@example.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8080
+    description: Локальный стенд (nginx + приложение)
+
+tags:
+  - name: Auth
+    description: Аутентификация и выдача JWT
+  - name: Товары
+    description: Список импортированных товаров и карточки
+  - name: Импорт
+    description: Асинхронный импорт товаров из XLSX
+  - name: Система
+    description: Служебные ручки
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/auth/login:
+    $ref: './openapi/paths/auth-login.yaml'
+  /api/health:
+    $ref: './openapi/paths/health.yaml'
+  /api/products:
+    $ref: './openapi/paths/products-list.yaml'
+  /api/products/{external_code}:
+    $ref: './openapi/paths/product-card.yaml'
+  /api/imports:
+    $ref: './openapi/paths/imports-upload.yaml'
+  /api/imports/{job_id}:
+    $ref: './openapi/paths/import-status.yaml'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: './openapi/components/security-schemes.yaml#/bearerAuth'
+
+  responses:
+    Unauthorized:
+      $ref: './openapi/components/responses.yaml#/Unauthorized'
+    BadRequest:
+      $ref: './openapi/components/responses.yaml#/BadRequest'
+    ErrorMessage:
+      $ref: './openapi/components/responses.yaml#/ErrorMessage'
+    TooManyRequests:
+      $ref: './openapi/components/responses.yaml#/TooManyRequests'
+
+  schemas:
+    LoginRequest:
+      $ref: './openapi/components/schemas/auth.yaml#/LoginRequest'
+    Token:
+      $ref: './openapi/components/schemas/auth.yaml#/Token'
+
+    DependencyStatus:
+      $ref: './openapi/components/schemas/health.yaml#/DependencyStatus'
+    HealthStatus:
+      $ref: './openapi/components/schemas/health.yaml#/HealthStatus'
+
+    Pagination:
+      $ref: './openapi/components/schemas/product.yaml#/Pagination'
+    ProductSummary:
+      $ref: './openapi/components/schemas/product.yaml#/ProductSummary'
+    ProductPage:
+      $ref: './openapi/components/schemas/product.yaml#/ProductPage'
+    ProductAttribute:
+      $ref: './openapi/components/schemas/product.yaml#/ProductAttribute'
+    ProductImage:
+      $ref: './openapi/components/schemas/product.yaml#/ProductImage'
+    ProductCard:
+      $ref: './openapi/components/schemas/product.yaml#/ProductCard'
+
+    ImportJobStatus:
+      $ref: './openapi/components/schemas/import.yaml#/ImportJobStatus'
+    ImportReport:
+      $ref: './openapi/components/schemas/import.yaml#/ImportReport'
+    ImportError:
+      $ref: './openapi/components/schemas/import.yaml#/ImportError'
+
+    Error:
+      $ref: './openapi/components/schemas/errors.yaml#/Error'
+    ErrorMessage:
+      $ref: './openapi/components/schemas/errors.yaml#/ErrorMessage'
+    RateLimitError:
+      $ref: './openapi/components/schemas/errors.yaml#/RateLimitError'
