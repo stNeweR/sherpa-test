@@ -49,7 +49,6 @@ info "GET /api/products: пагинация"
 PAGE="$(api "${BASE_URL}/api/products?page=1&limit=5")"
 ITEMS="$(printf '%s' "${PAGE}" | jq -r '.items | length')"
 [ "${ITEMS}" -le 5 ] || fail "ожидалось не больше 5 товаров, получено ${ITEMS}"
-TOTAL_BEFORE="$(printf '%s' "${PAGE}" | jq -r '.pagination.total')"
 [ "$(printf '%s' "${PAGE}" | jq -r '.pagination.page')" = "1" ] || fail "пагинация вернула неверный page"
 
 info "GET /api/products: поиск по name"
@@ -117,13 +116,16 @@ if [ "${ERRORS}" -gt 0 ]; then
 fi
 
 info "товары из импорта доступны в списке и в карточке"
-CODE="$(printf '%s' "${STATUS_JSON}" | jq -r '.report.errors[0].context.external_code // empty')"
 CARD="$(api "${BASE_URL}/api/products?limit=1")"
 FIRST_CODE="$(printf '%s' "${CARD}" | jq -r '.items[0].external_code // empty')"
 [ -n "${FIRST_CODE}" ] || fail "после импорта список товаров пуст"
 DETAIL="$(api "${BASE_URL}/api/products/${FIRST_CODE}")"
 [ "$(printf '%s' "${DETAIL}" | jq -r '.external_code')" = "${FIRST_CODE}" ] \
 	|| fail "карточка товара вернула другой external_code"
+
+# Счётчик снимаем после первого импорта: база может быть непустой (сидеры),
+# и первый импорт legitimately добавляет товары. Дальше он должен только обновлять.
+TOTAL_AFTER_FIRST="$(api "${BASE_URL}/api/products?page=1&limit=1" | jq -r '.pagination.total')"
 
 info "изображение отдаётся nginx"
 MEDIA_PATH="$(printf '%s' "${DETAIL}" | jq -r '[.images[]?.path] | map(select(. != null)) | .[0] // empty')"
@@ -166,8 +168,8 @@ done
 	|| fail "повторный импорт ничего не обновил"
 
 TOTAL_AFTER="$(api "${BASE_URL}/api/products?page=1&limit=1" | jq -r '.pagination.total')"
-[ "${TOTAL_AFTER}" = "${TOTAL_BEFORE}" ] \
-	|| fail "после повторного импорта товаров ${TOTAL_BEFORE}, стало ${TOTAL_AFTER} — upsiet не сработал"
+[ "${TOTAL_AFTER}" = "${TOTAL_AFTER_FIRST}" ] \
+	|| fail "после повторного импорта товаров ${TOTAL_AFTER_FIRST}, стало ${TOTAL_AFTER} — upsert по внешнему коду не сработал"
 
 info "лимит запросов импорта (${RATE_LIMIT} в минуту на IP)"
 SEEN_429=0

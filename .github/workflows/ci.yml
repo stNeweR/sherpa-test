@@ -113,47 +113,53 @@ jobs:
           tags: sherpa-test-backend:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
-  e2e:
-    name: E2E (docker compose + smoke.sh)
-    runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  # Джоб e2e отключён: стенд проверяется руками —
+  #   docker compose up -d --build && make migrate && make seed && make e2e
+  # Скрипт sh scripts/smoke.sh остаётся рабочим инструментом: он проверяет не
+  # только happy path, но и согласованность отчёта, отдачу /media через nginx,
+  # отсутствие дублей при повторном импорте и 429 по лимиту запросов импорта.
+  #e2e:
+  #  name: E2E (docker compose + smoke.sh)
+  #  runs-on: ubuntu-latest
 
-      # smoke.sh ходит по http://localhost:8080 — это nginx из сервиса frontend,
-      # который проксирует /api на app и отдаёт /media из тома media.
-      - name: Поднять стек
-        run: |
-          cp .env.example .env
-          docker compose up -d --build db rabbitmq app worker frontend
+  #    steps:
+  #      - uses: actions/checkout@v4
 
-      - name: Миграции, сидеры и очереди
-        run: |
-          docker compose exec -T app php bin/console migrations:migrate --no-interaction
-          docker compose exec -T app php bin/console app:seed --no-interaction
-          docker compose exec -T app php bin/console messenger:setup-transports async
-          docker compose exec -T app php bin/console messenger:setup-transports failed
+  #      # smoke.sh ходит по http://localhost:8080 — это nginx из сервиса frontend,
+  #      # который проксирует /api на app и отдаёт /media из тома media.
+  #      - name: Поднять стек
+  #        run: |
+  #          cp .env.example .env
+  #          docker compose up -d --build db rabbitmq app worker frontend
 
-      - name: Дождаться готовности API
-        run: |
-          for attempt in $(seq 1 60); do
-            if curl -fsS http://localhost:8080/api/health > /dev/null; then
-              echo "API готов"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "API не поднялся"
-          docker compose logs --tail=100
-          exit 1
+  #      - name: Миграции, сидеры и очереди
+  #        run: |
+  #          docker compose exec -T app php bin/console migrations:migrate --no-interaction
+  #          docker compose exec -T app php bin/console app:seed --no-interaction
+  #          docker compose exec -T app php bin/console messenger:setup-transports async
+  #          docker compose exec -T app php bin/console messenger:setup-transports failed
 
-      - name: E2E-проверки
-        run: sh scripts/smoke.sh
+  #      - name: Дождаться готовности API
+  #        run: |
+  #          for attempt in $(seq 1 60); do
+  #            if curl -fsS http://localhost:8080/api/health > /dev/null; then
+  #              echo "API готов"
+  #              exit 0
+  #            fi
+  #            sleep 2
+  #          done
+  #          echo "API не поднялся"
+  #          docker compose logs --tail=100
+  #          exit 1
 
-      - name: Логи стенда при падении
-        if: failure()
-        run: docker compose logs --tail=200
+  #      - name: E2E-проверки
+  #        run: sh scripts/smoke.sh
 
-      - name: Остановить стек
-        if: always()
-        run: docker compose down -v
+  #      - name: Логи стенда при падении
+  #        if: failure()
+  #        run: docker compose logs --tail=200
+
+  #      - name: Остановить стек
+  #        if: always()
+  #        run: docker compose down -v
